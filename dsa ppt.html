@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Warehouse Order Sorting & Delivery Dispatcher</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --ocean:#0056D2;
+    --slate:#1E293B;
+    --ice:#F0F7FF;
+    --navy:#0B1F3A;
+    --border:#DCE6F2;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:#E8EEF5;
+    color:var(--navy);
+    padding:40px 20px;
+  }
+  .deck{display:flex;flex-direction:column;gap:32px;align-items:center;}
+  .slide{
+    width:1280px;
+    height:720px;
+    background:var(--bg);
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 20px 60px rgba(11,31,58,.18), 0 4px 12px rgba(0,0,0,.08);
+    border:1px solid var(--border);
+  }
+  .num{
+    position:absolute;
+    bottom:24px;
+    right:32px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ocean);
+    letter-spacing:2px;
+    font-weight:600;
+    z-index:10;
+  }
+  .brand{
+    position:absolute;
+    bottom:24px;
+    left:32px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:#94A3B8;
+    letter-spacing:2px;
+    z-index:10;
+  }
+  .brand b{color:var(--ocean);}
+
+  /* Slide 1 — Cover */
+  .s1{
+    padding:0;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .s1-left{
+    padding:80px 70px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    background:linear-gradient(180deg,#FFFFFF 0%,#F5F9FF 100%);
+    position:relative;
+  }
+  .s1-left::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;
+    width:6px;height:100%;
+    background:var(--ocean);
+  }
+  .s1-tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:3px;
+    color:var(--ocean);
+    font-weight:600;
+    text-transform:uppercase;
+    display:flex;align-items:center;gap:12px;
+  }
+  .s1-tag::before{content:'';width:32px;height:2px;background:var(--ocean);}
+  .s1-title{
+    font-size:52px;
+    font-weight:800;
+    line-height:1.04;
+    color:var(--slate);
+    letter-spacing:-1.5px;
+    margin:24px 0 18px;
+  }
+  .s1-title em{
+    font-style:normal;
+    color:var(--ocean);
+  }
+  .s1-sub{
+    font-size:20px;
+    color:var(--navy);
+    font-weight:400;
+    line-height:1.4;
+    opacity:.7;
+    max-width:480px;
+  }
+  .s1-meta{
+    background:var(--ice);
+    border:1px solid var(--border);
+    border-left:3px solid var(--ocean);
+    padding:18px 22px;
+    border-radius:6px;
+    margin-top:auto;
+  }
+  .s1-meta-row{
+    font-size:13px;
+    color:var(--slate);
+    margin-bottom:6px;
+    display:flex;gap:10px;
+  }
+  .s1-meta-row:last-child{margin-bottom:0;}
+  .s1-meta-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:var(--ocean);
+    font-weight:700;
+    letter-spacing:1.5px;
+    min-width:90px;
+    text-transform:uppercase;
+  }
+  .s1-right{
+    background:linear-gradient(135deg,#0056D2 0%, #003B94 100%);
+    position:relative;
+    overflow:hidden;
+    padding:80px 60px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    color:#fff;
+  }
+  .s1-right::before{
+    content:'';
+    position:absolute;
+    top:-100px;right:-100px;
+    width:400px;height:400px;
+    border:2px solid rgba(255,255,255,.08);
+    border-radius:50%;
+  }
+  .s1-right::after{
+    content:'';
+    position:absolute;
+    bottom:-50px;left:-50px;
+    width:300px;height:300px;
+    border:2px solid rgba(255,255,255,.08);
+    border-radius:50%;
+  }
+  .s1-grid-vis{
+    position:relative;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-bottom:32px;
+  }
+  .s1-grid-row{display:flex;gap:8px;}
+  .s1-cell{
+    width:42px;height:42px;
+    background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.25);
+    border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    font-weight:600;
+  }
+  .s1-cell.hi{background:#FFFFFF;color:var(--ocean);}
+  .s1-cell.mid{background:rgba(255,255,255,.35);color:#fff;}
+  .s1-cell-arrow{
+    align-self:center;
+    color:rgba(255,255,255,.6);
+    font-size:18px;
+  }
+  .s1-presenters-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:3px;
+    color:rgba(255,255,255,.7);
+    margin-bottom:18px;
+    text-transform:uppercase;
+  }
+  .s1-presenters{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px 20px;
+    position:relative;
+    z-index:2;
+  }
+  .s1-presenter{
+    border-left:2px solid rgba(255,255,255,.4);
+    padding-left:12px;
+  }
+  .s1-presenter-name{
+    font-size:14px;
+    font-weight:600;
+    color:#fff;
+    margin-bottom:2px;
+  }
+  .s1-presenter-id{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:rgba(255,255,255,.65);
+    letter-spacing:1px;
+  }
+
+  /* Slide 2 */
+  .slide-header{
+    padding:48px 64px 0;
+    border-bottom:1px solid var(--border);
+    padding-bottom:24px;
+  }
+  .slide-eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ocean);
+    letter-spacing:3px;
+    font-weight:700;
+    text-transform:uppercase;
+    margin-bottom:8px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .slide-eyebrow .dot{width:6px;height:6px;background:var(--ocean);border-radius:50%;}
+  .slide-title{
+    font-size:36px;
+    font-weight:800;
+    color:var(--slate);
+    letter-spacing:-1px;
+    line-height:1.1;
+  }
+  .slide-body{padding:36px 64px;}
+
+  .s2-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+    margin-bottom:24px;
+  }
+  .card{
+    background:var(--ice);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:24px;
+    position:relative;
+  }
+  .card-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:var(--ocean);
+    letter-spacing:2px;
+    font-weight:700;
+    margin-bottom:10px;
+    text-transform:uppercase;
+  }
+  .card-h{
+    font-size:17px;
+    font-weight:700;
+    color:var(--slate);
+    margin-bottom:10px;
+    line-height:1.3;
+  }
+  .card-text{
+    font-size:13px;
+    line-height:1.6;
+    color:var(--navy);
+    opacity:.85;
+  }
+  .objectives{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:24px;
+  }
+  .obj-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    margin-top:14px;
+  }
+  .obj-item{
+    background:var(--ice);
+    border-top:3px solid var(--ocean);
+    padding:14px;
+    border-radius:4px;
+  }
+  .obj-num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:var(--ocean);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .obj-text{
+    font-size:12px;
+    color:var(--slate);
+    font-weight:600;
+    line-height:1.35;
+  }
+
+  /* Slide 3 */
+  .s3-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:28px;
+    margin-bottom:24px;
+  }
+  .core-concept{
+    background:var(--ice);
+    border-left:4px solid var(--ocean);
+    padding:20px 24px;
+    border-radius:4px;
+    margin-bottom:24px;
+  }
+  .core-concept .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:var(--ocean);
+    letter-spacing:2px;
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .core-concept .text{
+    font-size:15px;
+    color:var(--slate);
+    font-weight:500;
+    line-height:1.45;
+  }
+  .core-concept .text b{color:var(--ocean);}
+  .priority-table{
+    width:100%;
+    border-collapse:collapse;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:6px;
+    overflow:hidden;
+  }
+  .priority-table th{
+    background:var(--slate);
+    color:#fff;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:2px;
+    font-weight:600;
+    text-align:left;
+    padding:12px 14px;
+    text-transform:uppercase;
+  }
+  .priority-table td{
+    padding:14px;
+    border-bottom:1px solid var(--border);
+    font-size:13px;
+    color:var(--navy);
+  }
+  .priority-table tr:last-child td{border-bottom:none;}
+  .priority-table .pbadge{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:20px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    font-weight:700;
+  }
+  .pb-hi{background:#FFE5E5;color:#C92A2A;}
+  .pb-md{background:#FFF4D6;color:#B58300;}
+  .pb-lo{background:#E0F2E9;color:#1B7A3E;}
+  .pipeline{
+    background:var(--slate);
+    color:#fff;
+    border-radius:8px;
+    padding:24px;
+  }
+  .pipeline-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:rgba(255,255,255,.6);
+    letter-spacing:2px;
+    margin-bottom:14px;
+    text-transform:uppercase;
+  }
+  .pipeline-flow{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .pl-step{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-size:12px;
+  }
+  .pl-step .idx{
+    width:22px;height:22px;
+    border:1px solid rgba(255,255,255,.3);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    font-weight:700;
+    color:rgba(255,255,255,.8);
+    flex-shrink:0;
+  }
+  .pl-step.active .idx{background:var(--ocean);border-color:var(--ocean);color:#fff;}
+  .pl-step.active{color:#fff;font-weight:600;}
+  .pl-arrow{color:rgba(255,255,255,.3);font-size:10px;padding-left:34px;}
+
+  /* Slides 4, 5, 8 layout */
+  .split-slide{
+    display:grid;
+    grid-template-columns:1fr 380px;
+    gap:0;
+  }
+  .split-left{
+    padding:48px 48px 48px 64px;
+    display:flex;
+    flex-direction:column;
+  }
+  .split-left .slide-eyebrow{margin-bottom:8px;}
+  .split-left .slide-title{
+    font-size:30px;
+    color:var(--slate);
+    letter-spacing:-.8px;
+    border-bottom:1px solid var(--border);
+    padding-bottom:18px;
+    margin-bottom:24px;
+  }
+  .split-right{
+    background:var(--ice);
+    border-left:1px solid var(--border);
+    padding:48px 28px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+  }
+  .split-right .img-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    color:var(--ocean);
+    letter-spacing:2px;
+    margin-bottom:12px;
+    text-transform:uppercase;
+    font-weight:700;
+  }
+  .split-right img{
+    max-width:100%;
+    max-height:560px;
+    object-fit:contain;
+    border-radius:6px;
+    box-shadow:0 8px 24px rgba(11,31,58,.15);
+    border:1px solid var(--border);
+    background:#fff;
+  }
+  .split-right .img-cap{
+    margin-top:14px;
+    font-size:11px;
+    color:var(--slate);
+    text-align:center;
+    opacity:.75;
+    line-height:1.4;
+    max-width:280px;
+  }
+
+  /* Slide 4 specific */
+  .ds-card{
+    background:var(--ice);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:18px 20px;
+    margin-bottom:14px;
+    position:relative;
+    display:flex;
+    gap:18px;
+    align-items:flex-start;
+  }
+  .ds-icon{
+    width:44px;height:44px;
+    background:var(--ocean);
+    color:#fff;
+    border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:14px;
+    flex-shrink:0;
+  }
+  .ds-content h4{
+    font-size:15px;
+    color:var(--slate);
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .ds-content h4 code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ocean);
+    background:#fff;
+    padding:1px 6px;
+    border-radius:3px;
+    border:1px solid var(--border);
+    margin-left:6px;
+    font-weight:600;
+  }
+  .ds-content p{
+    font-size:12px;
+    color:var(--navy);
+    opacity:.85;
+    line-height:1.5;
+  }
+
+  /* Slide 5 specific */
+  .algo-card{
+    background:#fff;
+    border:1px solid var(--border);
+    border-left:4px solid var(--ocean);
+    border-radius:6px;
+    padding:18px 22px;
+    margin-bottom:16px;
+  }
+  .algo-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:12px;
+  }
+  .algo-head h4{
+    font-size:15px;
+    color:var(--slate);
+    font-weight:700;
+  }
+  .algo-tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    background:var(--ice);
+    color:var(--ocean);
+    padding:3px 8px;
+    border-radius:3px;
+    border:1px solid var(--border);
+    font-weight:600;
+  }
+  .algo-steps{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    color:var(--navy);
+    line-height:1.7;
+  }
+  .algo-steps .arr{color:var(--ocean);font-weight:700;}
+  .algo-steps .cmt{color:#64748B;font-style:italic;}
+
+  /* Slide 6 */
+  .s6-top{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:24px;
+    margin-bottom:24px;
+    align-items:center;
+  }
+  .lang-box{
+    background:var(--slate);
+    color:#fff;
+    padding:14px 22px;
+    border-radius:6px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .lang-box .l1{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    color:rgba(255,255,255,.5);
+    letter-spacing:2px;
+    text-transform:uppercase;
+  }
+  .lang-box .l2{
+    font-size:14px;
+    font-weight:600;
+  }
+  .lang-box .l2 code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:#7DD3FC;
+    background:rgba(0,0,0,.25);
+    padding:2px 6px;
+    border-radius:3px;
+  }
+  .func-table{
+    width:100%;
+    border-collapse:collapse;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:6px;
+    overflow:hidden;
+    font-size:12.5px;
+  }
+  .func-table th{
+    background:var(--ice);
+    color:var(--ocean);
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:1.5px;
+    font-weight:700;
+    text-align:left;
+    padding:10px 14px;
+    text-transform:uppercase;
+    border-bottom:2px solid var(--ocean);
+  }
+  .func-table td{
+    padding:11px 14px;
+    border-bottom:1px solid var(--border);
+    color:var(--navy);
+  }
+  .func-table tr:last-child td{border-bottom:none;}
+  .func-table .fn{
+    font-family:'JetBrains Mono',monospace;
+    color:var(--ocean);
+    font-weight:600;
+    font-size:12px;
+  }
+  .func-table .complexity{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    color:var(--slate);
+    font-size:11.5px;
+    text-align:right;
+  }
+  .complexity-legend{
+    margin-top:18px;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+  }
+  .leg-item{
+    background:var(--ice);
+    border:1px solid var(--border);
+    padding:12px 14px;
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .leg-big{
+    font-family:'JetBrains Mono',monospace;
+    font-size:18px;
+    color:var(--ocean);
+    font-weight:700;
+  }
+  .leg-text{
+    font-size:11px;
+    color:var(--slate);
+    line-height:1.4;
+  }
+
+  /* Slide 7 */
+  .code-block{
+    background:var(--slate);
+    color:#E2E8F0;
+    border-radius:6px;
+    padding:14px 18px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    line-height:1.5;
+    margin:8px 0 4px;
+    border-left:3px solid var(--ocean);
+  }
+  .code-block .kw{color:#7DD3FC;}
+  .code-block .fn{color:#FCD34D;}
+  .code-block .str{color:#86EFAC;}
+  .code-block .num-l{color:#FDA4AF;}
+  .code-block .cmt{color:#64748B;font-style:italic;}
+  .exc-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px 24px;
+  }
+  .exc-card{
+    background:var(--ice);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:18px 20px;
+  }
+  .exc-card.full{grid-column:1/-1;}
+  .exc-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .exc-num{
+    width:24px;height:24px;
+    background:var(--ocean);
+    color:#fff;
+    border-radius:4px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    font-weight:700;
+  }
+  .exc-title{
+    font-size:14px;
+    color:var(--slate);
+    font-weight:700;
+  }
+  .exc-desc{
+    font-size:12px;
+    color:var(--navy);
+    opacity:.85;
+    line-height:1.5;
+    margin-bottom:8px;
+  }
+
+  /* Slide 8 */
+  .bug-card{
+    background:var(--ice);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:18px 22px;
+    margin-bottom:14px;
+    display:grid;
+    grid-template-columns:60px 1fr;
+    gap:18px;
+  }
+  .bug-id{
+    width:48px;height:48px;
+    background:var(--slate);
+    color:#fff;
+    border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:16px;
+    font-weight:700;
+  }
+  .bug-content h4{
+    font-size:14px;
+    color:var(--slate);
+    font-weight:700;
+    margin-bottom:6px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .bug-tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    background:#FFE5E5;
+    color:#C92A2A;
+    padding:2px 6px;
+    border-radius:3px;
+    font-weight:700;
+    letter-spacing:1px;
+  }
+  .bug-tag.fix{background:#E0F2E9;color:#1B7A3E;}
+  .bug-content p{
+    font-size:12px;
+    color:var(--navy);
+    opacity:.85;
+    line-height:1.5;
+    margin-bottom:8px;
+  }
+  .bug-content p b{color:var(--slate);}
+  .bug-content .code-inline{
+    font-family:'JetBrains Mono',monospace;
+    background:#fff;
+    border:1px solid var(--border);
+    padding:2px 8px;
+    border-radius:3px;
+    font-size:11px;
+    color:var(--ocean);
+    display:inline-block;
+    margin-top:4px;
+  }
+
+  /* Slide 9 */
+  .s9-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+    margin-bottom:24px;
+  }
+  .result-card{
+    background:linear-gradient(135deg,var(--ice) 0%,#fff 100%);
+    border:1px solid var(--border);
+    border-left:4px solid var(--ocean);
+    border-radius:8px;
+    padding:22px;
+  }
+  .result-card .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:var(--ocean);
+    letter-spacing:2px;
+    font-weight:700;
+    margin-bottom:8px;
+    text-transform:uppercase;
+  }
+  .result-card h3{
+    font-size:17px;
+    color:var(--slate);
+    margin-bottom:8px;
+    line-height:1.3;
+  }
+  .result-card p{
+    font-size:12.5px;
+    color:var(--navy);
+    opacity:.85;
+    line-height:1.55;
+  }
+  .repo-box{
+    background:var(--slate);
+    color:#fff;
+    border-radius:6px;
+    padding:14px 18px;
+    margin-top:14px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .repo-box .ico{
+    width:36px;height:36px;
+    background:rgba(255,255,255,.08);
+    border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    color:#7DD3FC;
+    font-size:18px;
+    font-weight:700;
+    flex-shrink:0;
+  }
+  .repo-link{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    color:#7DD3FC;
+    word-break:break-all;
+    line-height:1.4;
+  }
+  .repo-link .label-r{
+    display:block;
+    color:rgba(255,255,255,.5);
+    font-size:9px;
+    letter-spacing:2px;
+    margin-bottom:3px;
+    text-transform:uppercase;
+  }
+  .benefits-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+    margin-bottom:20px;
+  }
+  .benefit-card{
+    background:var(--ice);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:16px;
+    text-align:center;
+  }
+  .benefit-card .big{
+    font-family:'JetBrains Mono',monospace;
+    font-size:22px;
+    color:var(--ocean);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .benefit-card .txt{
+    font-size:11.5px;
+    color:var(--slate);
+    line-height:1.4;
+  }
+  .future-card{
+    background:var(--ice);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:18px 22px;
+  }
+  .future-card .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:var(--ocean);
+    letter-spacing:2px;
+    font-weight:700;
+    margin-bottom:12px;
+    text-transform:uppercase;
+  }
+  .future-items{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+  }
+  .future-item{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .future-item .num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ocean);
+    font-weight:700;
+  }
+  .future-item .desc{
+    font-size:12px;
+    color:var(--slate);
+    line-height:1.4;
+  }
+  .future-item .desc code{
+    font-family:'JetBrains Mono',monospace;
+    color:var(--ocean);
+    background:#fff;
+    padding:1px 4px;
+    border-radius:2px;
+    font-size:10.5px;
+    border:1px solid var(--border);
+  }
+
+  /* Slide 10 — Thank You */
+  .s10{
+    background:linear-gradient(135deg,#0056D2 0%, #003B94 100%);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .s10::before{
+    content:'';
+    position:absolute;
+    top:-200px;right:-200px;
+    width:600px;height:600px;
+    border:2px solid rgba(255,255,255,.08);
+    border-radius:50%;
+  }
+  .s10::after{
+    content:'';
+    position:absolute;
+    bottom:-150px;left:-150px;
+    width:500px;height:500px;
+    border:2px solid rgba(255,255,255,.08);
+    border-radius:50%;
+  }
+  .s10-content{
+    text-align:center;
+    position:relative;
+    z-index:2;
+    margin-bottom:48px;
+  }
+  .s10-eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:4px;
+    color:rgba(255,255,255,.7);
+    margin-bottom:24px;
+    text-transform:uppercase;
+  }
+  .s10-title{
+    font-size:120px;
+    font-weight:800;
+    letter-spacing:-4px;
+    line-height:1;
+    margin-bottom:32px;
+  }
+  .s10-line{
+    width:80px;
+    height:3px;
+    background:#fff;
+    margin:0 auto 32px;
+  }
+  .s10-sub{
+    font-size:18px;
+    color:rgba(255,255,255,.85);
+    font-weight:300;
+    max-width:600px;
+    line-height:1.5;
+    margin:0 auto 40px;
+  }
+  .s10-team{
+    display:flex;
+    gap:32px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .s10-team-mem{
+    text-align:center;
+  }
+  .s10-team-mem .n{
+    font-size:13px;
+    font-weight:600;
+    color:#fff;
+    margin-bottom:2px;
+  }
+  .s10-team-mem .i{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:rgba(255,255,255,.6);
+    letter-spacing:1px;
+  }
+
+  /* Slide 10 Footer Bar */
+  .s10-footer{
+    position:absolute;
+    bottom:0;
+    left:0;
+    right:0;
+    height:48px;
+    background:rgba(0,0,0,.18);
+    border-top:1px solid rgba(255,255,255,.15);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 32px;
+    z-index:5;
+    backdrop-filter:blur(6px);
+  }
+  .s10-footer .s10-brand{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:2px;
+    color:rgba(255,255,255,.85);
+    font-weight:600;
+  }
+  .s10-footer .s10-brand b{
+    color:#fff;
+    font-weight:700;
+  }
+  .s10-footer .s10-num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:2px;
+    color:rgba(255,255,255,.85);
+    font-weight:600;
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- SLIDE 1 -->
+  <section class="slide s1">
+    <div class="s1-left">
+      <div>
+        <div class="s1-tag">Department of CSBS · DSA Assignment</div>
+        <h1 class="s1-title">Warehouse Order Sorting & <em>Delivery Dispatcher</em></h1>
+        <p class="s1-sub">A Priority-Based Data Structures Approach using Max Heap and LIFO Stack for Real-Time Order Routing.</p>
+      </div>
+      <div class="s1-meta">
+        <div class="s1-meta-row"><span class="s1-meta-label">Course</span><span>U25CSG12 — Data Structures</span></div>
+        <div class="s1-meta-row"><span class="s1-meta-label">Dept.</span><span>Computer Science & Business Systems</span></div>
+        <div class="s1-meta-row"><span class="s1-meta-label">Year</span><span>Academic Year 2026 – 2027</span></div>
+      </div>
+    </div>
+    <div class="s1-right">
+      <div class="s1-grid-vis">
+        <div class="s1-grid-row">
+          <div class="s1-cell hi">3</div>
+          <div class="s1-cell mid">2</div>
+          <div class="s1-cell">1</div>
+          <div class="s1-cell">2</div>
+          <div class="s1-cell">1</div>
+        </div>
+        <div class="s1-cell-arrow" style="text-align:center;">↓ &nbsp;&nbsp; heapify &nbsp;&nbsp; ↓</div>
+        <div class="s1-grid-row">
+          <div class="s1-cell hi">3</div>
+          <div class="s1-cell mid">2</div>
+          <div class="s1-cell">2</div>
+          <div class="s1-cell">1</div>
+          <div class="s1-cell">1</div>
+        </div>
+        <div class="s1-cell-arrow" style="text-align:center;">↓ &nbsp;&nbsp; dispatch &nbsp;&nbsp; ↓</div>
+        <div class="s1-grid-row">
+          <div class="s1-cell hi">3</div>
+          <div class="s1-cell">2</div>
+          <div class="s1-cell">2</div>
+          <div class="s1-cell">1</div>
+          <div class="s1-cell">1</div>
+        </div>
+      </div>
+      <div class="s1-presenters-label">Assignment Team</div>
+      <div class="s1-presenters">
+        <div class="s1-presenter">
+          <div class="s1-presenter-name">Hridika Deepak</div>
+          <div class="s1-presenter-id">25CB013</div>
+        </div>
+        <div class="s1-presenter">
+          <div class="s1-presenter-name">Sahana Sree</div>
+          <div class="s1-presenter-id">25CB045</div>
+        </div>
+        <div class="s1-presenter">
+          <div class="s1-presenter-name">Vasundara M</div>
+          <div class="s1-presenter-id">25CB061</div>
+        </div>
+        <div class="s1-presenter">
+          <div class="s1-presenter-name">Tamil Yazhini</div>
+          <div class="s1-presenter-id">25CB058</div>
+        </div>
+      </div>
+    </div>
+    <div class="brand"><b>WOD</b> · DISPATCHER v1.0</div>
+    <div class="num">01 / 10</div>
+  </section>
+
+  <!-- SLIDE 2 -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="slide-eyebrow"><span class="dot"></span>Section 01 · Problem Space</div>
+      <h2 class="slide-title">Problem Identification & Objectives</h2>
+    </div>
+    <div class="slide-body">
+      <div class="s2-grid">
+        <div class="card">
+          <div class="card-label">Problem Statement</div>
+          <div class="card-h">FIFO processing delays critical shipments.</div>
+          <div class="card-text">Traditional FIFO order processing creates major delivery delays because high-priority express shipments wait behind low-priority standard orders, leading to missed SLAs and dissatisfied customers.</div>
+        </div>
+        <div class="card" style="border-left:4px solid var(--ocean);">
+          <div class="card-label">Core Problem</div>
+          <div class="card-h">Dynamic routing + audit trail.</div>
+          <div class="card-text">How can a warehouse dynamically route high-priority orders first while preserving a complete dispatch history for audit trails and regulatory compliance?</div>
+        </div>
+      </div>
+      <div class="objectives">
+        <div class="card-label" style="color:var(--ocean);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;font-weight:700;text-transform:uppercase;">Project Objectives</div>
+        <div class="obj-grid">
+          <div class="obj-item">
+            <div class="obj-num">01</div>
+            <div class="obj-text">Dynamic priority queueing</div>
+          </div>
+          <div class="obj-item">
+            <div class="obj-num">02</div>
+            <div class="obj-text">O(log n) dynamic rebalancing</div>
+          </div>
+          <div class="obj-item">
+            <div class="obj-num">03</div>
+            <div class="obj-text">LIFO dispatch logging</div>
+          </div>
+          <div class="obj-item">
+            <div class="obj-num">04</div>
+            <div class="obj-text">Memory guard protections</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="brand"><b>WOD</b> · DISPATCHER v1.0</div>
+    <div class="num">02 / 10</div>
+  </section>
+
+  <!-- SLIDE 3 -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="slide-eyebrow"><span class="dot"></span>Section 02 · Architecture</div>
+      <h2 class="slide-title">Proposed Solution & Priority Mapping</h2>
+    </div>
+    <div class="slide-body">
+      <div class="core-concept">
+        <div class="label">Core Concept</div>
+        <div class="text"><b>Priority-Based Dispatcher</b> using <b>Max Heap</b> for pending orders and <b>Array Stack</b> for dispatch history — ensuring express shipments always dispatch first while retaining a complete chronological audit trail.</div>
+      </div>
+      <div class="s3-grid">
+        <div>
+          <table class="priority-table">
+            <thead>
+              <tr>
+                <th>Tier</th>
+                <th>Priority</th>
+                <th>Dispatch Order</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pbadge pb-hi">Express</span></td>
+                <td><strong>3</strong> — Highest</td>
+                <td>Dispatched First</td>
+              </tr>
+              <tr>
+                <td><span class="pbadge pb-md">Urgent</span></td>
+                <td><strong>2</strong> — Medium</td>
+                <td>Dispatched Second</td>
+              </tr>
+              <tr>
+                <td><span class="pbadge pb-lo">Normal</span></td>
+                <td><strong>1</strong> — Lowest</td>
+                <td>Dispatched Last</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pipeline">
+          <div class="pipeline-label">Execution Pipeline</div>
+          <div class="pipeline-flow">
+            <div class="pl-step active"><div class="idx">1</div><div>Order Entry</div></div>
+            <div class="pl-arrow">▼</div>
+            <div class="pl-step active"><div class="idx">2</div><div>Priority Assignment</div></div>
+            <div class="pl-arrow">▼</div>
+            <div class="pl-step"><div class="idx">3</div><div>Max Heapify-Up</div></div>
+            <div class="pl-arrow">▼</div>
+            <div class="pl-step"><div class="idx">4</div><div>Root Extraction</div></div>
+            <div class="pl-arrow">▼</div>
+            <div class="pl-step"><div class="idx">5</div><div>Max Heapify-Down</div></div>
+            <div class="pl-arrow">▼</div>
+            <div class="pl-step active"><div class="idx">6</div><div>Push to Stack</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="brand"><b>WOD</b> · DISPATCHER v1.0</div>
+    <div class="num">03 / 10</div>
+  </section>
+
+  <!-- SLIDE 4 -->
+  <section class="slide">
+    <div class="split-slide">
+      <div class="split-left">
+        <div class="slide-eyebrow"><span class="dot"></span>Section 03 · Data Structures</div>
+        <h2 class="slide-title">Data Structures Selected</h2>
+        <div class="ds-card">
+          <div class="ds-icon">H</div>
+          <div class="ds-content">
+            <h4>Max Heap <code>heap[100]</code></h4>
+            <p>Manages pending orders; guarantees <strong>O(1)</strong> access to highest priority item and <strong>O(log n)</strong> dynamic rebalancing on every insert and extract operation.</p>
+          </div>
+        </div>
+        <div class="ds-card">
+          <div class="ds-icon">S</div>
+          <div class="ds-content">
+            <h4>LIFO Stack <code>stack[100]</code></h4>
+            <p>Logs dispatched history; allows <strong>O(1)</strong> operational auditing of recent dispatches and supports full chronological traversal for compliance reviews.</p>
+          </div>
+        </div>
+        <div class="ds-card">
+          <div class="ds-icon">O</div>
+          <div class="ds-content">
+            <h4>Struct <code>typedef struct Order</code></h4>
+            <p>Encapsulates <code>orderId</code>, <code>customer</code> name, <code>destination</code>, and <code>priority</code> level — providing a clean, type-safe record for every shipment in the system.</p>
+          </div>
+        </div>
+      </div>
+      <div class="split-right">
+        <div class="img-label">▲ Reference Diagram 03</div>
+        <img src="https://z-cdn-media.chatglm.cn/files/a31858a2-daa3-43a0-8575-d3b9d4d1507d.png?auth_key=1887045894-95767a831e8a40d3bc1f70c2f3b1b1e0-0-21338a5a492d5034c0d8e7bb54712ca3" alt="Max Heap and Stack visualization">
+        <div class="img-cap">Max Heap (Priority Queue) maintains heap-order property; LIFO Stack stores dispatched order history with most-recent dispatch on top.</div>
+      </div>
+    </div>
+    <div class="brand"><b>WOD</b> · DISPATCHER v1.0</div>
+    <div class="num">04 / 10</div>
+  </section>
+
+  <!-- SLIDE 5 -->
+  <section class="slide">
+    <div class="split-slide">
+      <div class="split-left">
+        <div class="slide-eyebrow"><span class="dot"></span>Section 04 · Algorithms</div>
+        <h2 class="slide-title">Core Algorithm & Logic</h2>
+        <div class="algo-card">
+          <div class="algo-head">
+            <h4>Insert Algorithm · Up-Heapify</h4>
+            <span class="algo-tag">O(log n)</span>
+          </div>
+          <div class="algo-steps">
+            1 · Check <span class="cmt">heapSize &lt; MAX</span><br>
+            2 · Insert at <span class="cmt">heap[heapSize]</span><br>
+            3 · Swap with parent <span class="cmt">(i-1)/2</span> <span class="arr">→</span> while child priority &gt; parent<br>
+            4 · Continue until heap-order restored
+          </div>
+        </div>
+        <div class="algo-card">
+          <div class="algo-head">
+            <h4>Dispatch Algorithm · Down-Heapify</h4>
+            <span class="algo-tag">O(log n) + O(1)</span>
+          </div>
+          <div class="algo-steps">
+            1 · Check <span class="cmt">heapSize &gt; 0</span><br>
+            2 · Extract <span class="cmt">heap[0]</span> <span class="arr">→</span> the highest priority<br>
+            3 · Move last element to root<br>
+            4 · Compare children <span class="cmt">(2i+1, 2i+2)</span> <span class="arr">→</span> swap down<br>
+            5 · Push to stack <span class="cmt">[++top]</span> for audit log
+          </div>
+        </div>
+      </div>
+      <div class="split-right">
+        <div class="img-label">▲ Reference Diagram 02</div>
+        <img src="https://z-cdn-media.chatglm.cn/files/ba201dc0-3671-496d-8698-958c44e56a63.png?auth_key=1887046647-8857c3bd3dd74baa9342f7008e6499d6-0-9b0f24747035a6279230790709b6b493" alt="Program flowchart">
+        <div class="img-cap">Full program flow — Main Menu dispatches into Add, Dispatch, Display Pending, Display Dispatched, and Exit branches with looping control.</div>
+      </div>
+    </div>
+    <div class="brand"><b>WOD</b> · DISPATCHER v1.0</div>
+    <div class="num">05 / 10</div>
+  </section>
+
+  <!-- SLIDE 6 -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="slide-eyebrow"><span class="dot"></span>Section 05 · Implementation</div>
+      <h2 class="slide-title">Program Implementation & Complexity Analysis</h2>
+    </div>
+    <div class="slide-body">
+      <div class="s6-top">
+        <div class="lang-box">
+          <div class="l1">Language</div>
+          <div class="l2">C · <code>&lt;stdio.h&gt; &lt;stdlib.h&gt; &lt;string.h&gt;</code></div>
+        </div>
+        <div style="font-size:13px;color:var(--navy);opacity:.8;line-height:1.5;">
+          Implementation leverages the standard C library only — no external dependencies. Each function is isolated, testable, and wraps heap or stack primitives with explicit bounds checks.
+        </div>
+      </div>
+      <table class="func-table">
+        <thead>
+          <tr>
+            <th style="width:34%">Function</th>
+            <th>Responsibility</th>
+            <th style="width:18%;text-align:right;">Complexity</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="fn">getPriority()</td>
+            <td>Priority tier mapping (Express / Urgent / Normal)</td>
+            <td class="complexity">O(1)</td>
+          </tr>
+          <tr>
+            <td class="fn">swap()</td>
+            <td>Struct address exchange between two Order records</td>
+            <td class="complexity">O(1)</td>
+          </tr>
+          <tr>
+            <td class="fn">insertOrder()</td>
+            <td>Up-heapify algorithm — inserts new order into Max Heap</td>
+            <td class="complexity">O(log n)</td>
+          </tr>
+          <tr>
+            <td class="fn">dispatchOrder()</td>
+            <td>Root extraction & down-heapify + stack push for audit</td>
+            <td class="complexity">O(log n) + O(1)</td>
+          </tr>
+          <tr>
+            <td class="fn">displayPendingOrders()</td>
+            <td>Sequential heap array scan of all queued orders</td>
+            <td class="complexity">O(n)</td>
+          </tr>
+          <tr>
+            <td class="fn">displayDispatchedOrders()</td>
+            <td>LIFO stack array scan of dispatched history log</td>
+            <td class="complexity">O(n)</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="complexity-legend">
+        <div class="leg-item">
+          <div class="leg-big">O(1)</div>
+          <div class="leg-text">Constant-time access to root element and stack top — fastest operations in the dispatcher.</div>
+        </div>
+        <div class="leg-item">
+          <div class="leg-big">O(log n)</div>
+          <div class="leg-text">Tree-height bounded heapify operations — predictable under heavy load.</div>
+        </div>
+        <div class="leg-item">
+          <div class="leg-big">O(n)</div>
+          <div class="leg-text">Linear traversal only for display / audit — never on the critical dispatch path.</div>
+        </div>
+      </div>
+    </div>
+    <div class="brand"><b>WOD</b> · DISPATCHER v1.0</div>
+    <div class="num">06 / 10</div>
+  </section>
+
+  <!-- SLIDE 7 -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="slide-eyebrow"><span class="dot"></span>Section 06 · Safety</div>
+      <h2 class="slide-title">Advanced Exception Handling & Code Safety</h2>
+    </div>
+    <div class="slide-body">
+      <div class="exc-grid">
+        <div class="exc-card">
+          <div class="exc-head">
+            <div class="exc-num">01</div>
+            <div class="exc-title">Heap Overflow Guard</div>
+          </div>
+          <div class="exc-desc">Prevents writing past array bounds when the heap is full — critical for memory safety in fixed-buffer dispatchers.</div>
+          <div class="code-block">
+            <span class="kw">if</span> (heapSize &gt;= MAX) { <span class="cmt">// reject insertion</span> }
+          </div>
+        </div>
+        <div class="exc-card">
+          <div class="exc-head">
+            <div class="exc-num">02</div>
+            <div class="exc-title">Queue Underflow Guard</div>
+          </div>
+          <div class="exc-desc">Intercepts deletion calls on an empty heap, preventing undefined root extraction behaviour.</div>
+          <div class="code-block">
+            <span class="kw">if</span> (heapSize == <span class="num-l">0</span>) { <span class="cmt">// abort dispatch</span> }
+          </div>
+        </div>
+        <div class="exc-card">
+          <div class="exc-head">
+            <div class="exc-num">03</div>
+            <div class="exc-title">Stack Boundary Checks</div>
+          </div>
+          <div class="exc-desc">Guards push operations against overflow and display against underflow on the audit stack.</div>
+          <div class="code-block">
+            <span class="kw">if</span> (top &lt; MAX - <span class="num-l">1</span>) { <span class="fn">push</span>(); }<br>
+            <span class="kw">if</span> (top == -<span class="num-l">1</span>) { <span class="cmt">// stack empty</span> }
+          </div>
+        </div>
+        <div class="exc-card">
+          <div class="exc-head">
+            <div class="exc-num">04</div>
+            <div class="exc-title">Input Validation</div>
+          </div>
+          <div class="exc-desc">Traps out-of-range priority menu choices before they pollute the heap with invalid tier values.</div>
+          <div class="code-block">
+            <span class="kw">if</span> (order.priority == <span class="num-l">0</span>) { <span class="cmt">// reject, re-prompt</span> }
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="brand"><b>WOD</b> · DISPATCHER v1.0</div>
+    <div class="num">07 / 10</div>
+  </section>
+
+  <!-- SLIDE 8 -->
+  <section class="slide">
+    <div class="split-slide">
+      <div class="split-left">
+        <div class="slide-eyebrow"><span class="dot"></span>Section 07 · Debugging</div>
+        <h2 class="slide-title">Errors Faced & Debugging Log</h2>
+        <div class="bug-card">
+          <div class="bug-id">01</div>
+          <div class="bug-content">
+            <h4>Child Boundary Defect <span class="bug-tag">BUG</span> <span class="bug-tag fix">FIXED</span></h4>
+            <p>Array <b>out-of-bounds</b> occurred during child index checks at the bottom heap level — produced garbage reads.</p>
+            <span class="code-inline">if (left &lt; heapSize &amp;&amp; heap[left].priority &gt; ...)</span>
+          </div>
+        </div>
+        <div class="bug-card">
+          <div class="bug-id">02</div>
+          <div class="bug-content">
+            <h4>Loop Underflow <span class="bug-tag">BUG</span> <span class="bug-tag fix">FIXED</span></h4>
+            <p><b>Signed integer underflow</b> when computing parent index at <code style="font-family:'JetBrains Mono',monospace;background:#fff;padding:1px 4px;border:1px solid var(--border);border-radius:2px;">i=0</code> — caused infinite loop on first insertion.</p>
+            <span class="code-inline">while (i &gt; 0)</span>
+          </div>
+        </div>
+        <div class="bug-card">
+          <div class="bug-id">03</div>
+          <div class="bug-content">
+            <h4>Input Corruption <span class="bug-tag">BUG</span> <span class="bug-tag fix">FIXED</span></h4>
+            <p><code style="font-family:'JetBrains Mono',monospace;background:#fff;padding:1px 4px;border:1px solid var(--border);border-radius:2px;">scanf("%s")</code> <b>truncated names at spaces</b> — broke multi-word customer names.</p>
+            <span class="code-inline">scanf(" %[^\n]", order.customer)</span>
+          </div>
+        </div>
+      </div>
+      <div class="split-right">
+        <div class="img-label">▲ Reference Diagram 01</div>
+        <img src="https://z-cdn-media.chatglm.cn/files/190b70ce-328d-4695-aeff-5f70dc1e5e05.png?auth_key=1887045894-45aaca8bfb4d418192386cfb9ec5969a-0-8eb08f2c68ef357e048a3ef5f2d86dc4" alt="CodeBlocks IDE and terminal runtime">
+        <div class="img-cap">Code::Blocks IDE view — C source with Order struct on left; runtime menu, order insertion confirmation on right.</div>
+      </div>
+    </div>
+    <div class="brand"><b>WOD</b> · DISPATCHER v1.0</div>
+    <div class="num">08 / 10</div>
+  </section>
+
+  <!-- SLIDE 9 -->
+  <section class="slide">
+    <div class="slide-header">
+      <div class="slide-eyebrow"><span class="dot"></span>Section 08 · Outcomes</div>
+      <h2 class="slide-title">Results, Conclusion & Repository</h2>
+    </div>
+    <div class="slide-body">
+      <div class="s9-grid">
+        <div class="result-card">
+          <div class="label">Results</div>
+          <h3>Dynamic dispatcher built end-to-end.</h3>
+          <p>Successfully implemented a warehouse order dispatcher using Max Heap for priority routing and Stack for audit logging — verified across all priority tiers.</p>
+          <div class="repo-box">
+            <div class="ico">&lt;/&gt;</div>
+            <div class="repo-link">
+              <span class="label-r">Source Code Repository</span>
+              https://github.com/vasundhara-0321/<br>DSA-MINI-PROJECT-.git
+            </div>
+          </div>
+        </div>
+        <div class="result-card">
+          <div class="label">Key Benefits</div>
+          <div class="benefits-grid" style="margin-top:8px;">
+            <div class="benefit-card">
+              <div class="big">0s</div>
+              <div class="txt">Zero delay for express packages</div>
+            </div>
+            <div class="benefit-card">
+              <div class="big">log n</div>
+              <div class="txt">Predictable execution time</div>
+            </div>
+            <div class="benefit-card">
+              <div class="big">O(1)</div>
+              <div class="txt">Instant audit history access</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="future-card">
+        <div class="label">Future Scope</div>
+        <div class="future-items">
+          <div class="future-item">
+            <div class="num">→ 01</div>
+            <div class="desc">Dynamic memory allocation via <code>malloc</code> for unbounded heap growth.</div>
+          </div>
+          <div class="future-item">
+            <div class="num">→ 02</div>
+            <div class="desc">Multi-factor priority sorting — weight, distance, customer tier combined.</div>
+          </div>
+          <div class="future-item">
+            <div class="num">→ 03</div>
+            <div class="desc">Persistent file storage using <code>fopen</code> to survive restarts.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="brand"><b>WOD</b> · DISPATCHER v1.0</div>
+    <div class="num">09 / 10</div>
+  </section>
+
+  <!-- SLIDE 10 -->
+  <section class="slide s10">
+    <div class="s10-content">
+      <div class="s10-eyebrow">Warehouse Order Sorting & Delivery Dispatcher</div>
+      <h1 class="s10-title">THANK YOU</h1>
+      <div class="s10-line"></div>
+      <p class="s10-sub">A priority-based data structures approach — engineered for predictable dispatch and complete audit traceability.</p>
+          </div>
+    <div class="s10-footer">
+      <div class="s10-brand"><b>WOD</b> · DISPATCHER v1.0</div>
+      <div class="s10-num">10 / 10</div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
